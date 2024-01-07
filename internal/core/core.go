@@ -16,7 +16,6 @@ type DBContainer struct {
 	DB            *gorm.DB
 }
 
-// NewContainer creates a new Container with dependencies.
 func NewDBContainer() *DBContainer {
 
 	dsn := "user=postgres password=password dbname=mydatabase sslmode=disable host=localhost"
@@ -33,7 +32,7 @@ func NewDBContainer() *DBContainer {
 }
 
 func CreateTrack(c *gin.Context, container *DBContainer) {
-	// Parse JSON request
+
 	var requestBody map[string]string
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
@@ -42,14 +41,14 @@ func CreateTrack(c *gin.Context, container *DBContainer) {
 
 	isrc := requestBody["isrc"]
 
-	// Fetch track metadata from Spotify
+
 	track, err := fetchTrackMetadata(isrc)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch track metadata from Spotify"})
 		return
 	}
 
-	// Store track in the database
+
 	rows := container.DB.Create(&track)
 	if rows.Error != nil {
 		fmt.Print("error while creating entry in  database")
@@ -88,7 +87,7 @@ func GetTracksByArtist(c *gin.Context, container *DBContainer) {
 }
 
 func fetchTrackMetadata(isrc string) (model.Track, error) {
-	// Spotify API configuration
+
 	config := &clientcredentials.Config{
 		ClientID:     "fb26292c91fc4c4c9519d02e063f37be",
 		ClientSecret: "59ac994379fe40fb889044b50f3173ef",
@@ -100,27 +99,22 @@ func fetchTrackMetadata(isrc string) (model.Track, error) {
 		return model.Track{}, err
 	}
 
-	// Create Spotify client
 	auth := spotify.NewAuthenticator(token.AccessToken)
 	client := auth.NewClient(token)
 
-	// Search for track using ISRC
 	result, err := client.Search(fmt.Sprintf("isrc:%s", isrc), spotify.SearchTypeTrack)
 	if err != nil {
 		return model.Track{}, err
 	}
 
-	// Get the first track (highest popularity)
 	firstTrack := result.Tracks.Tracks[0]
 
-	// Extract track metadata
 	track := model.Track{
 		ISRC:            isrc,
 		Title:           firstTrack.Name,
 		SpotifyImageURI: firstTrack.Album.Images[0].URL,
 	}
 
-	// Extract artist names
 	for _, artist := range firstTrack.Artists {
 		track.Artists = append(track.Artists, model.Artist{Name: artist.Name})
 	}

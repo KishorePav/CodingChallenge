@@ -5,12 +5,12 @@ type Track struct {
 	ISRC            string `gorm:"unique;not null"`
 	Title           string
 	SpotifyImageURI string
-	Artists         []Artist `gorm:"foreignKey:TrackID"` // Relationship: One Track has many Artists
+	Artists         []Artist `gorm:"foreignKey:TrackID"`
 }
 
 type Artist struct {
 	ID      uint `gorm:"primaryKey"`
-	TrackID uint `gorm:"index"` // Foreign key
+	TrackID uint `gorm:"index"`
 	Name    string
 }
 
